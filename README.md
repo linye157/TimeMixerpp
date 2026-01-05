@@ -222,10 +222,13 @@ TimeMixer/
 │   ├── data.py          # Dataset 与 DataLoader 工具
 │   └── utils.py         # 随机种子、指标、checkpoint
 ├── scripts/
-│   ├── train.py         # 训练脚本（支持 --resume 继续训练）
-│   ├── test.py          # 测试脚本（在测试集上评估）
-│   ├── infer.py         # 推理脚本（无标签预测）
-│   └── inspect_shapes.py # 查看中间张量形状
+│   ├── train.py            # 训练脚本（支持 --resume 继续训练）
+│   ├── test.py             # 测试脚本（在测试集上评估）
+│   ├── infer.py            # 推理脚本（无标签预测）
+│   ├── inspect_shapes.py   # 查看中间张量形状
+│   ├── extract_features.py # 提取多尺度特征
+│   ├── baseline_comparison.py # 基线模型对比
+│   └── ablation_study.py   # 消融实验
 ├── tests/
 │   └── test_shapes.py   # 单元测试
 ├── checkpoints/         # 保存的模型
@@ -466,6 +469,184 @@ python scripts/infer.py --checkpoint checkpoints/best_model.pt --input new_data.
 | `config`               | 模型配置参数                         |
 | `normalizer_mean`      | 数据归一化均值                       |
 | `normalizer_std`       | 数据归一化标准差                     |
+
+## 提取多尺度特征
+
+使用 `extract_features.py` 提取经过所有 MixerBlock 后、输出头之前的多尺度特征：
+
+```bash
+# 提取特征并保存
+python scripts/extract_features.py --checkpoint checkpoints/best_model.pt --data_path TDdata/TrainData.csv --output features train_features.npz --save_labels
+
+# 查看已保存的特征
+python scripts/extract_features.py --view features/train_features.npz
+```
+
+### 输出示例
+
+```
+==============================================================
+ Multi-Scale Features Summary
+==============================================================
+
+Keys in file: ['scale_0', 'scale_1', 'scale_2', 'labels', 'config']
+
+Number of scales: 3
+------------------------------------------------------------
+
+scale_0:
+  Shape: (1000, 48, 64)
+  Dtype: float32
+  Min:   -3.245612
+  Max:   4.123456
+  Mean:  0.001234
+  Std:   0.987654
+
+scale_1:
+  Shape: (1000, 24, 64)
+  ...
+
+scale_2:
+  Shape: (1000, 12, 64)
+  ...
+```
+
+### 在代码中使用提取的特征
+
+```python
+import numpy as np
+
+# 加载特征
+data = np.load('features/train_features.npz')
+
+# 获取各尺度特征
+scale_0 = data['scale_0']  # (n_samples, 48, d_model)
+scale_1 = data['scale_1']  # (n_samples, 24, d_model)
+scale_2 = data['scale_2']  # (n_samples, 12, d_model)
+
+# 获取标签（如果保存了）
+labels = data['labels']  # (n_samples,)
+```
+
+## 基线模型对比
+
+使用 `baseline_comparison.py` 与其他时序分类模型进行对比：
+
+```bash
+# 运行所有基线模型对比
+python scripts/baseline_comparison.py --data_path TDdata/TrainData.csv --epochs 50
+
+# 只对比特定模型
+python scripts/baseline_comparison.py --data_path TDdata/TrainData.csv --models lstm bilstm transformer
+
+# 包含 TimeMixer++ 一起对比
+python scripts/baseline_comparison.py --data_path TDdata/TrainData.csv --include_timemixer
+```
+
+### 可用的基线模型
+
+| 模型名称 | 描述 |
+|----------|------|
+| `lstm` | LSTM 分类器 |
+| `bilstm` | 双向 LSTM 分类器 |
+| `lstm_transformer` | LSTM + Transformer 混合模型 |
+| `cnn_bilstm` | CNN + BiLSTM 混合模型 |
+| `transformer` | 纯 Transformer 分类器 |
+| `mlp` | 多层感知机 |
+| `gru` | GRU 分类器 |
+
+### 添加自定义模型
+
+```python
+from scripts.baseline_comparison import register_model
+
+class MyModel(nn.Module):
+    def __init__(self, seq_len=48, hidden_dim=64, **kwargs):
+        super().__init__()
+        # ... 定义模型结构
+    
+    def forward(self, x):
+        # ... 前向传播
+        return {'logits': logits, 'probs': torch.sigmoid(logits)}
+
+# 注册模型
+register_model(
+    'my_model',
+    MyModel,
+    {'hidden_dim': 64, 'dropout': 0.1},
+    'My custom model description'
+)
+```
+
+### 输出示例
+
+```
+================================================================================
+ Comparison Results
+================================================================================
+Model                    Params      Acc       F1    AUROC      FPR      FNR
+--------------------------------------------------------------------------------
+timemixer++              52,481   0.8520   0.8456   0.9123   0.1234   0.1567
+transformer              45,123   0.8234   0.8123   0.8901   0.1456   0.1789
+lstm_transformer         38,567   0.8156   0.8045   0.8756   0.1567   0.1890
+cnn_bilstm               34,234   0.8089   0.7956   0.8678   0.1678   0.1956
+bilstm                   28,456   0.7945   0.7823   0.8534   0.1789   0.2067
+lstm                     24,123   0.7834   0.7712   0.8423   0.1890   0.2178
+================================================================================
+```
+
+## 消融实验
+
+使用 `ablation_study.py` 分析各组件的贡献：
+
+```bash
+# 运行所有消融实验
+python scripts/ablation_study.py --data_path TDdata/TrainData.csv --epochs 50
+
+# 只运行特定消融
+python scripts/ablation_study.py --data_path TDdata/TrainData.csv --ablations full no_tid no_mcm
+```
+
+### 可用的消融实验
+
+| 消融名称 | 描述 |
+|----------|------|
+| `full` | 完整模型（基准） |
+| `no_fft` | 使用固定周期代替 FFT 检测 |
+| `no_tid` | 移除 TID（无季节性/趋势分解） |
+| `no_mcm` | 移除 MCM（无跨尺度混合） |
+| `no_mrm` | 移除 MRM（使用简单平均代替幅值加权） |
+| `single_scale` | 单尺度（无多尺度处理） |
+| `top_k_1` | Top-K=1（只用 1 个周期） |
+| `top_k_5` | Top-K=5（使用 5 个周期） |
+| `layers_1` | 1 层 MixerBlock |
+| `layers_4` | 4 层 MixerBlock |
+| `d_model_32` | d_model=32（较小隐藏维度） |
+| `d_model_128` | d_model=128（较大隐藏维度） |
+
+### 输出示例
+
+```
+==========================================================================================
+ Ablation Study Results
+==========================================================================================
+Ablation             Description                         Params      Acc       F1    AUROC
+------------------------------------------------------------------------------------------
+full                 Complete TimeMixer++ model          52,481   0.8520   0.8456   0.9123
+no_mrm               Simple average instead of amp..     52,481   0.8423   0.8345   0.9012
+no_mcm               No cross-scale mixing               48,234   0.8312   0.8234   0.8901
+no_tid               No seasonal/trend decomposition     45,678   0.8178   0.8089   0.8789
+no_fft               Fixed periods instead of FFT        52,481   0.8045   0.7956   0.8678
+single_scale         No multi-scale processing           35,234   0.7823   0.7712   0.8456
+==========================================================================================
+
+Relative F1 (vs Full Model):
+  no_mrm: -0.0111 (-1.3%)
+  no_mcm: -0.0222 (-2.6%)
+  no_tid: -0.0367 (-4.3%)
+  no_fft: -0.0500 (-5.9%)
+  single_scale: -0.0744 (-8.8%)
+```
 
 ## 许可
 
