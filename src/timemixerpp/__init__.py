@@ -6,6 +6,11 @@ A modular implementation of the TimeMixer++ architecture with:
 - TID: Time Image Decomposition
 - MCM: Multi-Scale Mixing
 - MRM: Multi-Resolution Mixing
+
+Also includes:
+- Metric Learning: TemporalConvEmbedder for sequence embeddings
+- Losses: SupConLoss for contrastive learning
+- Qdrant Utils: Vector database integration
 """
 
 from .config import TimeMixerPPConfig
@@ -16,8 +21,13 @@ from .tid import TID
 from .mcm import MCM
 from .mrm import MRM
 
+# Metric learning components
+from .metric_encoder import TemporalConvEmbedder, MultiScaleEmbedder, AttentionPooling
+from .losses import SupConLoss, CombinedSupConBCELoss, MultiScaleSupConLoss
+
 __version__ = "1.0.0"
 __all__ = [
+    # Core TimeMixer++ components
     "TimeMixerPPConfig",
     "TimeMixerPPEncoder",
     "TimeMixerPPForBinaryCls",
@@ -26,5 +36,12 @@ __all__ = [
     "TID",
     "MCM",
     "MRM",
+    # Metric learning components
+    "TemporalConvEmbedder",
+    "MultiScaleEmbedder",
+    "AttentionPooling",
+    "SupConLoss",
+    "CombinedSupConBCELoss",
+    "MultiScaleSupConLoss",
 ]
 
