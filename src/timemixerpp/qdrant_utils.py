@@ -225,15 +225,44 @@ def search_similar(
         ]
         query_filter = Filter(must=conditions)
     
-    # Search
-    results = client.search(
-        collection_name=collection_name,
-        query_vector=query_vector,
-        limit=top_k,
-        query_filter=query_filter,
-        with_payload=with_payload,
-        with_vectors=with_vectors
-    )
+    # Search - handle different qdrant-client versions
+    try:
+        # Try newer API first (qdrant-client >= 1.7.0)
+        if hasattr(client, 'query_points'):
+            response = client.query_points(
+                collection_name=collection_name,
+                query=query_vector,
+                limit=top_k,
+                query_filter=query_filter,
+                with_payload=with_payload,
+                with_vectors=with_vectors
+            )
+            results = response.points if hasattr(response, 'points') else response
+        elif hasattr(client, 'search'):
+            # Older API (qdrant-client < 1.7.0)
+            results = client.search(
+                collection_name=collection_name,
+                query_vector=query_vector,
+                limit=top_k,
+                query_filter=query_filter,
+                with_payload=with_payload,
+                with_vectors=with_vectors
+            )
+        else:
+            raise AttributeError("QdrantClient has no search or query_points method")
+    except TypeError as e:
+        # Handle parameter name changes in different versions
+        if 'query_vector' in str(e):
+            results = client.query_points(
+                collection_name=collection_name,
+                query=query_vector,
+                limit=top_k,
+                query_filter=query_filter,
+                with_payload=with_payload,
+                with_vectors=with_vectors
+            ).points
+        else:
+            raise
     
     # Format results
     formatted = []
@@ -245,7 +274,7 @@ def search_similar(
         }
         if with_payload and hit.payload:
             result['payload'] = hit.payload
-        if with_vectors and hit.vector:
+        if with_vectors and hasattr(hit, 'vector') and hit.vector:
             result['vector'] = hit.vector
         formatted.append(result)
     

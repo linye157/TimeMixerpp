@@ -93,14 +93,14 @@ python scripts/train.py --data_path TDdata/TrainData.csv --ablation single_scale
 
 **可用的消融类型**：
 
-| 消融类型 | 说明 | 输出文件 |
-|----------|------|----------|
-| `full` | 完整模型（默认） | `best_model.pt` |
-| `no_fft` | 使用固定周期代替FFT检测 | `best_model_no_fft.pt` |
-| `no_tid` | 去掉TID（无季节性/趋势分解） | `best_model_no_tid.pt` |
-| `no_mcm` | 去掉MCM（无跨尺度混合） | `best_model_no_mcm.pt` |
-| `no_mrm` | 去掉MRM（简单平均代替幅值加权） | `best_model_no_mrm.pt` |
-| `single_scale` | 单尺度（无多尺度处理） | `best_model_single_scale.pt` |
+| 消融类型         | 说明                            | 输出文件                       |
+| ---------------- | ------------------------------- | ------------------------------ |
+| `full`         | 完整模型（默认）                | `best_model.pt`              |
+| `no_fft`       | 使用固定周期代替FFT检测         | `best_model_no_fft.pt`       |
+| `no_tid`       | 去掉TID（无季节性/趋势分解）    | `best_model_no_tid.pt`       |
+| `no_mcm`       | 去掉MCM（无跨尺度混合）         | `best_model_no_mcm.pt`       |
+| `no_mrm`       | 去掉MRM（简单平均代替幅值加权） | `best_model_no_mrm.pt`       |
+| `single_scale` | 单尺度（无多尺度处理）          | `best_model_single_scale.pt` |
 
 ### 推理
 
@@ -352,18 +352,19 @@ python scripts/inspect_shapes.py --checkpoint checkpoints/best_model.pt
 
 ### 形状变化总结表
 
-| 阶段 | 输入形状 | 输出形状 | 说明 |
-|------|----------|----------|------|
-| 输入 | (B, T) | (B, T, 1) | 增加通道维度 |
-| 投影 | (B, T, 1) | (B, T, d) | Linear: 1→d_model |
-| 多尺度 | (B, T, d) | [(B, L_m, d)]×(M+1) | Conv1d stride=2 |
-| MRTI | (B, L_m, d) | (B, d, H, W) | 1D→2D, H=period |
-| TID | (B, d, H, W) | s,t: (B, d, H, W) | 双轴注意力，形状不变 |
-| MCM | s,t: (B, d, H, W) | (B, L_m, d) | 2D→1D 还原 |
-| MRM | [(B, L_m, d)]×K | (B, L_m, d) | 跨周期加权聚合 |
-| 输出头 | [(B, L_m, d)]×(M+1) | (B, 1) | 池化+多尺度集成 |
+| 阶段   | 输入形状             | 输出形状             | 说明                 |
+| ------ | -------------------- | -------------------- | -------------------- |
+| 输入   | (B, T)               | (B, T, 1)            | 增加通道维度         |
+| 投影   | (B, T, 1)            | (B, T, d)            | Linear: 1→d_model   |
+| 多尺度 | (B, T, d)            | [(B, L_m, d)]×(M+1) | Conv1d stride=2      |
+| MRTI   | (B, L_m, d)          | (B, d, H, W)         | 1D→2D, H=period     |
+| TID    | (B, d, H, W)         | s,t: (B, d, H, W)    | 双轴注意力，形状不变 |
+| MCM    | s,t: (B, d, H, W)    | (B, L_m, d)          | 2D→1D 还原          |
+| MRM    | [(B, L_m, d)]×K     | (B, L_m, d)          | 跨周期加权聚合       |
+| 输出头 | [(B, L_m, d)]×(M+1) | (B, 1)               | 池化+多尺度集成      |
 
 其中：
+
 - `B` = batch_size
 - `T` = seq_len = 48
 - `d` = d_model = 64
@@ -432,14 +433,14 @@ python scripts/inspect_shapes.py --checkpoint checkpoints/best_model.pt
 
 ### test.py 参数
 
-| 参数                  | 类型  | 默认值         | 说明                                           |
-| --------------------- | ----- | -------------- | ---------------------------------------------- |
-| `--checkpoint`      | str   | **必需** | 模型检查点路径                                 |
-| `--test_path`       | str   | **必需** | 测试数据路径                                   |
-| `--output`          | str   | None           | 预测结果保存路径                               |
-| `--threshold`       | float | 0.5            | 预测分类阈值                                   |
-| `--label_threshold` | float | None           | 标签分类阈值（默认与 threshold 相同）          |
-| `--output_features` | flag  | -              | 是否输出特征                                   |
+| 参数                  | 类型  | 默认值         | 说明                                  |
+| --------------------- | ----- | -------------- | ------------------------------------- |
+| `--checkpoint`      | str   | **必需** | 模型检查点路径                        |
+| `--test_path`       | str   | **必需** | 测试数据路径                          |
+| `--output`          | str   | None           | 预测结果保存路径                      |
+| `--threshold`       | float | 0.5            | 预测分类阈值                          |
+| `--label_threshold` | float | None           | 标签分类阈值（默认与 threshold 相同） |
+| `--output_features` | flag  | -              | 是否输出特征                          |
 
 ### infer.py 参数
 
@@ -553,28 +554,28 @@ python scripts/extract_features.py --list_ablations
 
 ### extract_features.py 参数
 
-| 参数 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| `--checkpoint` | str | **必需** | 模型检查点路径 |
-| `--data_path` | str | **必需** | 数据文件路径 |
-| `--ablation` | str | full | 消融类型（见下表） |
-| `--output` | str | auto | 输出文件路径（自动生成如不指定） |
-| `--output_dir` | str | features | 输出目录（配合自动命名使用） |
-| `--save_labels` | flag | - | 是否保存标签 |
-| `--batch_size` | int | 32 | 批大小 |
-| `--view` | str | None | 查看已保存的特征文件 |
-| `--list_ablations` | flag | - | 列出所有可用消融类型 |
+| 参数                 | 类型 | 默认值         | 说明                             |
+| -------------------- | ---- | -------------- | -------------------------------- |
+| `--checkpoint`     | str  | **必需** | 模型检查点路径                   |
+| `--data_path`      | str  | **必需** | 数据文件路径                     |
+| `--ablation`       | str  | full           | 消融类型（见下表）               |
+| `--output`         | str  | auto           | 输出文件路径（自动生成如不指定） |
+| `--output_dir`     | str  | features       | 输出目录（配合自动命名使用）     |
+| `--save_labels`    | flag | -              | 是否保存标签                     |
+| `--batch_size`     | int  | 32             | 批大小                           |
+| `--view`           | str  | None           | 查看已保存的特征文件             |
+| `--list_ablations` | flag | -              | 列出所有可用消融类型             |
 
 ### 可用的消融类型
 
-| 消融类型 | 说明 | 输出文件命名示例 |
-|----------|------|------------------|
-| `full` | 完整模型（默认） | `TrainData_features.npz` |
-| `no_fft` | 使用固定周期代替FFT检测 | `TrainData_features_no_fft.npz` |
-| `no_tid` | 去掉TID（无季节性/趋势分解） | `TrainData_features_no_tid.npz` |
-| `no_mcm` | 去掉MCM（无跨尺度混合） | `TrainData_features_no_mcm.npz` |
-| `no_mrm` | 去掉MRM（简单平均代替幅值加权） | `TrainData_features_no_mrm.npz` |
-| `single_scale` | 单尺度（无多尺度处理） | `TrainData_features_single_scale.npz` |
+| 消融类型         | 说明                            | 输出文件命名示例                        |
+| ---------------- | ------------------------------- | --------------------------------------- |
+| `full`         | 完整模型（默认）                | `TrainData_features.npz`              |
+| `no_fft`       | 使用固定周期代替FFT检测         | `TrainData_features_no_fft.npz`       |
+| `no_tid`       | 去掉TID（无季节性/趋势分解）    | `TrainData_features_no_tid.npz`       |
+| `no_mcm`       | 去掉MCM（无跨尺度混合）         | `TrainData_features_no_mcm.npz`       |
+| `no_mrm`       | 去掉MRM（简单平均代替幅值加权） | `TrainData_features_no_mrm.npz`       |
+| `single_scale` | 单尺度（无多尺度处理）          | `TrainData_features_single_scale.npz` |
 
 ### 输出示例
 
@@ -672,34 +673,35 @@ python scripts/baseline_comparison.py --data_path TDdata/TrainData.csv --include
 
 ### baseline_comparison.py 参数
 
-| 参数 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| `--data_path` | str | **必需** | 训练数据路径 |
-| `--test_path` | str | None | 测试数据路径（可选） |
-| `--test_split` | float | 0.3 | 测试集划分比例（若未指定 test_path） |
-| `--models` | list | all | 要对比的模型列表 |
-| `--include_timemixer` | flag | - | 是否包含 TimeMixer++ |
-| `--epochs` | int | 50 | 训练轮数 |
-| `--batch_size` | int | 32 | 批大小 |
-| `--lr` | float | 1e-3 | 学习率 |
-| `--val_split` | float | 0.2 | 验证集划分比例 |
+| 参数                    | 类型  | 默认值         | 说明                                 |
+| ----------------------- | ----- | -------------- | ------------------------------------ |
+| `--data_path`         | str   | **必需** | 训练数据路径                         |
+| `--test_path`         | str   | None           | 测试数据路径（可选）                 |
+| `--test_split`        | float | 0.3            | 测试集划分比例（若未指定 test_path） |
+| `--models`            | list  | all            | 要对比的模型列表                     |
+| `--include_timemixer` | flag  | -              | 是否包含 TimeMixer++                 |
+| `--epochs`            | int   | 50             | 训练轮数                             |
+| `--batch_size`        | int   | 32             | 批大小                               |
+| `--lr`                | float | 1e-3           | 学习率                               |
+| `--val_split`         | float | 0.2            | 验证集划分比例                       |
 
 **测试集逻辑**：
+
 - 若指定 `--test_path`：使用独立测试集
 - 若 `--test_split > 0`：从训练数据中划分指定比例作为测试集
 - 若 `--test_split = 0`：使用全部训练数据作为测试集（训练完后在同一数据上测试）
 
 ### 可用的基线模型
 
-| 模型名称 | 描述 |
-|----------|------|
-| `lstm` | LSTM 分类器 |
-| `bilstm` | 双向 LSTM 分类器 |
+| 模型名称             | 描述                        |
+| -------------------- | --------------------------- |
+| `lstm`             | LSTM 分类器                 |
+| `bilstm`           | 双向 LSTM 分类器            |
 | `lstm_transformer` | LSTM + Transformer 混合模型 |
-| `cnn_bilstm` | CNN + BiLSTM 混合模型 |
-| `transformer` | 纯 Transformer 分类器 |
-| `mlp` | 多层感知机 |
-| `gru` | GRU 分类器 |
+| `cnn_bilstm`       | CNN + BiLSTM 混合模型       |
+| `transformer`      | 纯 Transformer 分类器       |
+| `mlp`              | 多层感知机                  |
+| `gru`              | GRU 分类器                  |
 
 ### 添加自定义模型
 
@@ -710,7 +712,7 @@ class MyModel(nn.Module):
     def __init__(self, seq_len=48, hidden_dim=64, **kwargs):
         super().__init__()
         # ... 定义模型结构
-    
+  
     def forward(self, x):
         # ... 前向传播
         return {'logits': logits, 'probs': torch.sigmoid(logits)}
@@ -768,41 +770,42 @@ python scripts/ablation_study.py --data_path TDdata/TrainData.csv --ablations fu
 
 ### ablation_study.py 参数
 
-| 参数 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| `--data_path` | str | **必需** | 训练数据路径 |
-| `--test_path` | str | None | 测试数据路径（可选） |
-| `--test_split` | float | 0.3 | 测试集划分比例（若未指定 test_path） |
-| `--ablations` | list | all | 要运行的消融实验列表 |
-| `--epochs` | int | 50 | 训练轮数 |
-| `--batch_size` | int | 32 | 批大小 |
-| `--lr` | float | 1e-3 | 学习率 |
-| `--d_model` | int | 64 | 基础隐藏维度 |
-| `--n_layers` | int | 2 | 基础层数 |
-| `--top_k` | int | 3 | 基础 Top-K |
-| `--val_split` | float | 0.2 | 验证集划分比例 |
+| 参数             | 类型  | 默认值         | 说明                                 |
+| ---------------- | ----- | -------------- | ------------------------------------ |
+| `--data_path`  | str   | **必需** | 训练数据路径                         |
+| `--test_path`  | str   | None           | 测试数据路径（可选）                 |
+| `--test_split` | float | 0.3            | 测试集划分比例（若未指定 test_path） |
+| `--ablations`  | list  | all            | 要运行的消融实验列表                 |
+| `--epochs`     | int   | 50             | 训练轮数                             |
+| `--batch_size` | int   | 32             | 批大小                               |
+| `--lr`         | float | 1e-3           | 学习率                               |
+| `--d_model`    | int   | 64             | 基础隐藏维度                         |
+| `--n_layers`   | int   | 2              | 基础层数                             |
+| `--top_k`      | int   | 3              | 基础 Top-K                           |
+| `--val_split`  | float | 0.2            | 验证集划分比例                       |
 
 **测试集逻辑**：
+
 - 若指定 `--test_path`：使用独立测试集
 - 若 `--test_split > 0`：从训练数据中划分指定比例作为测试集
 - 若 `--test_split = 0`：使用全部训练数据作为测试集（训练完后在同一数据上测试）
 
 ### 可用的消融实验
 
-| 消融名称 | 描述 |
-|----------|------|
-| `full` | 完整模型（基准） |
-| `no_fft` | 使用固定周期代替 FFT 检测 |
-| `no_tid` | 移除 TID（无季节性/趋势分解） |
-| `no_mcm` | 移除 MCM（无跨尺度混合） |
-| `no_mrm` | 移除 MRM（使用简单平均代替幅值加权） |
-| `single_scale` | 单尺度（无多尺度处理） |
-| `top_k_1` | Top-K=1（只用 1 个周期） |
-| `top_k_5` | Top-K=5（使用 5 个周期） |
-| `layers_1` | 1 层 MixerBlock |
-| `layers_4` | 4 层 MixerBlock |
-| `d_model_32` | d_model=32（较小隐藏维度） |
-| `d_model_128` | d_model=128（较大隐藏维度） |
+| 消融名称         | 描述                                 |
+| ---------------- | ------------------------------------ |
+| `full`         | 完整模型（基准）                     |
+| `no_fft`       | 使用固定周期代替 FFT 检测            |
+| `no_tid`       | 移除 TID（无季节性/趋势分解）        |
+| `no_mcm`       | 移除 MCM（无跨尺度混合）             |
+| `no_mrm`       | 移除 MRM（使用简单平均代替幅值加权） |
+| `single_scale` | 单尺度（无多尺度处理）               |
+| `top_k_1`      | Top-K=1（只用 1 个周期）             |
+| `top_k_5`      | Top-K=5（使用 5 个周期）             |
+| `layers_1`     | 1 层 MixerBlock                      |
+| `layers_4`     | 4 层 MixerBlock                      |
+| `d_model_32`   | d_model=32（较小隐藏维度）           |
+| `d_model_128`  | d_model=128（较大隐藏维度）          |
 
 ### 输出示例
 
@@ -872,21 +875,22 @@ python scripts/train_embedding.py \
 
 **训练脚本参数**：
 
-| 参数 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| `--npz_path` | str | **必需** | 多尺度特征 NPZ 文件路径 |
-| `--out_dir` | str | **必需** | 输出目录（checkpoint、splits、metrics） |
-| `--emb_dim` | int | 128 | Embedding 维度 |
-| `--hidden_dim` | int | 128 | Conv 层隐藏维度 |
-| `--tau` | float | 0.07 | SupCon 温度参数 |
-| `--use_bce` | str | false | 是否联合训练 BCE 分类头 |
-| `--lambda_bce` | float | 0.5 | BCE 损失权重 |
-| `--scale_weights` | str | 0.5,0.3,0.2 | 三尺度损失权重 |
-| `--epochs` | int | 20 | 训练轮数 |
-| `--batch_size` | int | 256 | 批大小 |
-| `--balanced_sampling` | str | false | 是否平衡采样（处理类别不平衡） |
+| 参数                    | 类型  | 默认值         | 说明                                    |
+| ----------------------- | ----- | -------------- | --------------------------------------- |
+| `--npz_path`          | str   | **必需** | 多尺度特征 NPZ 文件路径                 |
+| `--out_dir`           | str   | **必需** | 输出目录（checkpoint、splits、metrics） |
+| `--emb_dim`           | int   | 128            | Embedding 维度                          |
+| `--hidden_dim`        | int   | 128            | Conv 层隐藏维度                         |
+| `--tau`               | float | 0.07           | SupCon 温度参数                         |
+| `--use_bce`           | str   | false          | 是否联合训练 BCE 分类头                 |
+| `--lambda_bce`        | float | 0.5            | BCE 损失权重                            |
+| `--scale_weights`     | str   | 0.5,0.3,0.2    | 三尺度损失权重                          |
+| `--epochs`            | int   | 20             | 训练轮数                                |
+| `--batch_size`        | int   | 256            | 批大小                                  |
+| `--balanced_sampling` | str   | false          | 是否平衡采样（处理类别不平衡）          |
 
 **输出文件**：
+
 - `runs/emb_exp1/checkpoint.pt` - 模型 checkpoint
 - `runs/emb_exp1/splits.json` - 数据划分（train/val/test）
 - `runs/emb_exp1/metrics.json` - 训练指标
@@ -918,27 +922,30 @@ python scripts/ingest_to_qdrant_3scales.py \
 
 **入库脚本参数**：
 
-| 参数 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| `--npz_path` | str | **必需** | 多尺度特征 NPZ 文件路径 |
-| `--ckpt_path` | str | **必需** | Embedding encoder checkpoint |
-| `--use_all_data` | flag | - | 入库 NPZ 全部数据（忽略 splits） |
-| `--splits_path` | str | None | 数据划分 JSON（可选） |
-| `--split` | str | train | 入库哪个划分（train/val/test/all） |
-| `--qdrant_url` | str | http://localhost:6333 | Qdrant 服务地址 |
-| `--collection_prefix` | str | accident_kb | Collection 名称前缀 |
-| `--recreate` | flag | - | 是否重建已有 collection |
+| 参数                    | 类型 | 默认值                | 说明                               |
+| ----------------------- | ---- | --------------------- | ---------------------------------- |
+| `--npz_path`          | str  | **必需**        | 多尺度特征 NPZ 文件路径            |
+| `--ckpt_path`         | str  | **必需**        | Embedding encoder checkpoint       |
+| `--use_all_data`      | flag | -                     | 入库 NPZ 全部数据（忽略 splits）   |
+| `--splits_path`       | str  | None                  | 数据划分 JSON（可选）              |
+| `--split`             | str  | train                 | 入库哪个划分（train/val/test/all） |
+| `--qdrant_url`        | str  | http://localhost:6333 | Qdrant 服务地址                    |
+| `--collection_prefix` | str  | accident_kb           | Collection 名称前缀                |
+| `--recreate`          | flag | -                     | 是否重建已有 collection            |
 
 **入库模式说明**：
+
 - `--use_all_data`：直接入库 NPZ 文件中的全部数据，无需 splits.json
 - `--splits_path` + `--split`：按划分入库，适合只入库训练集作为知识库
 
 **创建的 Collection**：
+
 - `{prefix}_scale0` - 尺度 0 (48 时间步)
 - `{prefix}_scale1` - 尺度 1 (24 时间步)
 - `{prefix}_scale2` - 尺度 2 (12 时间步)
 
 **Payload 字段**：
+
 - `label` - 二值标签 (0/1)
 - `sample_id` - 原始样本索引
 - `scale` - 尺度索引 (0/1/2)
@@ -946,9 +953,19 @@ python scripts/ingest_to_qdrant_3scales.py \
 
 ### 3. RAG 查询
 
-查询相似样本并融合预测：
+查询相似样本，支持两种模式：
 
 ```bash
+# 模式1：仅检索（默认）- 只查看相似样本，不做预测
+python scripts/query_rag_3scales.py \
+    --npz_path features/alldata_features_no_tid.npz \
+    --ckpt_path runs/emb_exp1/checkpoint.pt \
+    --qdrant_url http://localhost:6333 \
+    --collection_prefix accident_kb_no_tid \
+    --query_index 123 \
+    --top_k 10
+
+# 模式2：检索 + 融合预测
 python scripts/query_rag_3scales.py \
     --npz_path features/alldata_features_no_tid.npz \
     --ckpt_path runs/emb_exp1/checkpoint.pt \
@@ -956,25 +973,45 @@ python scripts/query_rag_3scales.py \
     --collection_prefix accident_kb_no_tid \
     --query_index 123 \
     --top_k 10 \
+    --retrieve_only false \
     --gamma 10 \
     --fusion_mode fixed \
-    --w0 0.5 --w1 0.3 --w2 0.2 \
+    --w0 0.5 --w1 0.3 --w2 0.2
+
+# JSON 输出（便于程序处理或接 LLM）
+python scripts/query_rag_3scales.py \
+    --npz_path features/alldata_features_no_tid.npz \
+    --ckpt_path runs/emb_exp1/checkpoint.pt \
+    --qdrant_url http://localhost:6333 \
+    --collection_prefix accident_kb_no_tid \
+    --query_index 123 \
+    --top_k 10 \
     --json_output true
 ```
 
 **查询脚本参数**：
 
-| 参数 | 类型 | 默认值 | 说明 |
-|------|------|--------|------|
-| `--query_index` | int | **必需** | 查询样本在 NPZ 中的索引 |
-| `--top_k` | int | 10 | 检索的相似样本数 |
-| `--gamma` | float | 10.0 | 相似度加权系数：`w_i = exp(gamma * score_i)` |
-| `--fusion_mode` | str | fixed | 融合模式（fixed/learned） |
-| `--w0, w1, w2` | float | 0.5,0.3,0.2 | 固定融合权重 |
-| `--json_output` | str | false | 输出 JSON 格式（便于接 LLM） |
-| `--output_file` | str | None | JSON 输出文件路径 |
+| 参数              | 类型  | 默认值         | 说明                                                       |
+| ----------------- | ----- | -------------- | ---------------------------------------------------------- |
+| `--query_index`   | int   | **必需**       | 查询样本在 NPZ 中的索引                                    |
+| `--top_k`         | int   | 10             | 检索的相似样本数                                           |
+| `--retrieve_only` | str   | true           | 仅检索不预测（true=只看相似样本，false=融合预测）          |
+| `--exclude_self`  | str   | true           | 过滤掉查询样本本身（避免 top1 永远是自己）                 |
+| `--min_results`   | int   | 10             | 额外请求的结果数（确保过滤后有足够 top_k）                 |
+| `--gamma`         | float | 10.0           | 相似度加权系数（仅 retrieve_only=false 时生效）            |
+| `--fusion_mode`   | str   | fixed          | 融合模式（fixed/learned，仅 retrieve_only=false 时生效）   |
+| `--w0, w1, w2`    | float | 0.5,0.3,0.2    | 固定融合权重（仅 retrieve_only=false 时生效）              |
+| `--json_output`   | str   | false          | 输出 JSON 格式                                             |
+| `--output_file`   | str   | None           | JSON 输出文件路径                                          |
 
-**融合公式**：
+**两种模式说明**：
+
+| 模式       | 参数                              | 用途           | 输出内容                             |
+| ---------- | --------------------------------- | -------------- | ------------------------------------ |
+| 仅检索     | `--retrieve_only true`（默认）    | 查看相似样本   | 三尺度 TopK 列表（id, label, score） |
+| 融合预测   | `--retrieve_only false`           | 基于相似样本预测 | TopK + 概率融合 + 预测结果         |
+
+**融合公式**（仅 retrieve_only=false 时使用）：
 
 ```
 尺度内概率: p_m = Σ w_i * label_i / Σ w_i  (w_i = exp(gamma * score_i))
@@ -982,6 +1019,50 @@ python scripts/query_rag_3scales.py \
 ```
 
 ### 查询输出示例
+
+#### 仅检索模式（默认）
+
+**控制台输出**：
+
+```
+======================================================================
+ 三尺度 RAG 检索结果
+======================================================================
+
+查询样本:
+  Index: 123
+  真实标签: 0.8
+
+----------------------------------------------------------------------
+ Scale 0 (48 时间步)
+----------------------------------------------------------------------
+Rank  ID        Label   Label_raw   Score       
+------------------------------------------------
+1     456       1       0.9         0.9512      
+2     789       1       0.8         0.9234      
+3     234       0       0.3         0.9012      
+...
+
+======================================================================
+```
+
+**JSON 输出**（仅检索模式）：
+
+```json
+{
+  "query_index": 123,
+  "true_label": 0.8,
+  "results": {
+    "scale0": [
+      {"rank": 1, "id": 456, "label": 1, "label_raw": 0.9, "score": 0.9512, "sample_id": 456}
+    ],
+    "scale1": [...],
+    "scale2": [...]
+  }
+}
+```
+
+#### 融合预测模式
 
 **控制台输出**：
 
@@ -997,11 +1078,11 @@ python scripts/query_rag_3scales.py \
 ----------------------------------------------------------------------
  Scale 0 (48 时间步) - 概率: 0.7234
 ----------------------------------------------------------------------
-Rank  ID      Label   Score     Weight    
-------------------------------------------
-1     456     1       0.9512    0.3245    
-2     789     1       0.9234    0.2876    
-3     234     0       0.9012    0.2456    
+Rank  ID        Label   Score       Weight    
+----------------------------------------------
+1     456       1       0.9512      0.3245    
+2     789       1       0.9234      0.2876    
+3     234       0       0.9012      0.2456    
 ...
 
 ======================================================================
@@ -1016,7 +1097,7 @@ Rank  ID      Label   Score     Weight
 ======================================================================
 ```
 
-**JSON 输出**（用于 LLM 解释）：
+**JSON 输出**（融合预测模式）：
 
 ```json
 {
@@ -1069,6 +1150,7 @@ embedding
 ```
 
 **关键设计**：
+
 1. **Attention Pooling**：学习哪些时间步重要，保留时序信息
 2. **L2 归一化**：使 embedding 适合余弦相似度检索
 3. **共享 Encoder**：三个尺度共用同一个 encoder，参数高效
