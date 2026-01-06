@@ -1238,6 +1238,115 @@ python scripts/query_rag_3scales.py \
     --fusion_mode fixed
 ```
 
+## 原始数据 RAG 系统
+
+除了多尺度 embedding RAG 系统，还支持直接将原始 48 维温度向量存入 Qdrant 进行相似样本检索。
+
+### 原始数据入库
+
+将 CSV 或 Excel 文件中的原始数据直接存入 Qdrant：
+
+```cmd
+REM 入库 CSV 文件
+python scripts/ingest_raw_to_qdrant.py --data_path TDdata/TrainData.csv --qdrant_url http://localhost:6333 --collection_name raw_temperature_kb --recreate
+
+REM 入库 Excel 文件
+python scripts/ingest_raw_to_qdrant.py --data_path TDdata/alldata.xlsx --qdrant_url http://localhost:6333 --collection_name raw_temperature_kb
+
+REM 使用 L2 归一化（推荐，提升余弦相似度检索效果）
+python scripts/ingest_raw_to_qdrant.py --data_path TDdata/TrainData.csv --qdrant_url http://localhost:6333 --collection_name raw_temperature_kb --l2_normalize --recreate
+
+REM 追加数据（使用 ID 偏移避免覆盖）
+python scripts/ingest_raw_to_qdrant.py --data_path TDdata/TestData.csv --qdrant_url http://localhost:6333 --collection_name raw_temperature_kb --id_offset 1000
+```
+
+**入库脚本参数**：
+
+| 参数                | 类型 | 默认值                | 说明                             |
+| ------------------- | ---- | --------------------- | -------------------------------- |
+| `--data_path`       | str  | **必需**              | 数据文件路径（.xlsx 或 .csv）    |
+| `--qdrant_url`      | str  | http://localhost:6333 | Qdrant 服务地址                  |
+| `--collection_name` | str  | raw_temperature_kb    | Collection 名称                  |
+| `--normalize`       | flag | -                     | 应用 z-score 归一化              |
+| `--l2_normalize`    | flag | -                     | 应用 L2 归一化（推荐）           |
+| `--distance`        | str  | Cosine                | 距离度量（Cosine/Euclid/Dot）    |
+| `--recreate`        | flag | -                     | 重建已有 collection              |
+| `--id_offset`       | int  | 0                     | ID 偏移量（用于追加数据）        |
+| `--batch_size`      | int  | 256                   | 批量插入大小                     |
+
+**Payload 字段**：
+
+- `label` - 二值标签 (0/1)
+- `label_raw` - 原始标签值 (float)
+- `sample_id` - 样本索引
+- `source_file` - 来源文件名
+
+### 原始数据查询
+
+查询相似样本，支持仅检索和预测两种模式：
+
+```cmd
+REM 从文件中指定索引查询（仅检索，默认）
+python scripts/query_raw_qdrant.py --data_path TDdata/TrainData.csv --qdrant_url http://localhost:6333 --collection_name raw_temperature_kb --query_index 123 --top_k 10
+
+REM 检索 + 预测模式
+python scripts/query_raw_qdrant.py --data_path TDdata/TrainData.csv --qdrant_url http://localhost:6333 --collection_name raw_temperature_kb --query_index 123 --top_k 10 --retrieve_only false --gamma 10
+
+REM 直接输入 48 维向量查询
+python scripts/query_raw_qdrant.py --qdrant_url http://localhost:6333 --collection_name raw_temperature_kb --query_vector "1.2,3.4,5.6,..." --top_k 10
+
+REM JSON 输出
+python scripts/query_raw_qdrant.py --data_path TDdata/TrainData.csv --qdrant_url http://localhost:6333 --collection_name raw_temperature_kb --query_index 123 --json_output true
+
+REM 使用 L2 归一化（需与入库时一致）
+python scripts/query_raw_qdrant.py --data_path TDdata/TrainData.csv --qdrant_url http://localhost:6333 --collection_name raw_temperature_kb --query_index 123 --l2_normalize
+```
+
+**查询脚本参数**：
+
+| 参数                    | 类型  | 默认值                | 说明                                        |
+| ----------------------- | ----- | --------------------- | ------------------------------------------- |
+| `--data_path`           | str   | None                  | 数据文件路径（配合 --query_index 使用）     |
+| `--query_index`         | int   | None                  | 查询样本索引                                |
+| `--query_vector`        | str   | None                  | 直接输入 48 维向量（逗号分隔）              |
+| `--qdrant_url`          | str   | http://localhost:6333 | Qdrant 服务地址                             |
+| `--collection_name`     | str   | raw_temperature_kb    | Collection 名称                             |
+| `--top_k`               | int   | 10                    | 检索的相似样本数                            |
+| `--retrieve_only`       | str   | true                  | 仅检索不预测                                |
+| `--exclude_self`        | str   | true                  | 过滤掉查询样本本身                          |
+| `--gamma`               | float | 10.0                  | 相似度加权系数（retrieve_only=false 时有效）|
+| `--normalize`           | flag  | -                     | 应用 z-score 归一化                         |
+| `--l2_normalize`        | flag  | -                     | 应用 L2 归一化                              |
+| `--json_output`         | str   | false                 | 输出 JSON 格式                              |
+| `--output_file`         | str   | None                  | JSON 输出文件路径                           |
+
+### 原始数据 RAG 完整工作流
+
+```cmd
+REM 1. 启动 Qdrant（Docker）
+docker run -p 6333:6333 qdrant/qdrant
+
+REM 2. 入库原始数据（使用 L2 归一化）
+python scripts/ingest_raw_to_qdrant.py --data_path TDdata/alldata.xlsx --qdrant_url http://localhost:6333 --collection_name raw_temperature_kb --l2_normalize --recreate
+
+REM 3. 查询相似样本（仅检索）
+python scripts/query_raw_qdrant.py --data_path TDdata/alldata.xlsx --qdrant_url http://localhost:6333 --collection_name raw_temperature_kb --query_index 100 --top_k 10 --l2_normalize
+
+REM 4. 查询并预测
+python scripts/query_raw_qdrant.py --data_path TDdata/alldata.xlsx --qdrant_url http://localhost:6333 --collection_name raw_temperature_kb --query_index 100 --top_k 10 --l2_normalize --retrieve_only false --gamma 10
+```
+
+### 原始数据 vs 多尺度 Embedding 对比
+
+| 特性         | 原始数据 RAG                 | 多尺度 Embedding RAG        |
+| ------------ | ---------------------------- | --------------------------- |
+| 向量维度     | 48 维                        | 128 维（可配置）            |
+| 是否需要训练 | 否                           | 是（SupCon + BCE）          |
+| 多尺度信息   | 无                           | 有（3 个尺度）              |
+| 检索效果     | 基于原始特征相似度           | 基于学习到的语义相似度      |
+| 适用场景     | 快速原型、简单任务           | 复杂任务、高精度需求        |
+| 入库速度     | 快                           | 需要先提取特征、训练编码器  |
+
 ### 项目新增文件
 
 ```
@@ -1249,8 +1358,10 @@ TimeMixer/
 │   └── data.py             # +NPZMultiScaleDataset, create_splits
 ├── scripts/
 │   ├── train_embedding.py          # Embedding 训练脚本
-│   ├── ingest_to_qdrant_3scales.py # Qdrant 入库脚本
-│   └── query_rag_3scales.py        # RAG 查询脚本
+│   ├── ingest_to_qdrant_3scales.py # 三尺度 Qdrant 入库脚本
+│   ├── query_rag_3scales.py        # 三尺度 RAG 查询脚本
+│   ├── ingest_raw_to_qdrant.py     # 原始数据入库脚本
+│   └── query_raw_qdrant.py         # 原始数据查询脚本
 └── runs/                           # 训练输出目录
     └── emb_exp1/
         ├── checkpoint.pt
