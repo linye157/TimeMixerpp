@@ -1064,11 +1064,11 @@ python scripts/query_rag_3scales.py \
 ----------------------------------------------------------------------
  Scale 0 (48 时间步)
 ----------------------------------------------------------------------
-Rank  ID        Label   Label_raw   Score     
+Rank  ID        Label   Label_raw   Score   
 ------------------------------------------------
-1     456       1       0.9         0.9512    
-2     789       1       0.8         0.9234    
-3     234       0       0.3         0.9012    
+1     456       1       0.9         0.9512  
+2     789       1       0.8         0.9234  
+3     234       0       0.3         0.9012  
 ...
 
 ======================================================================
@@ -1289,50 +1289,52 @@ python scripts/predict_with_ollama_rag.py --data_path TDdata/alldata.xlsx --qdra
 
 ### CLI 参数
 
-| 参数                   | 类型  | 默认值                | 说明                                        |
-| ---------------------- | ----- | --------------------- | ------------------------------------------- |
-| `--input_inline`       | str   | -                     | 48维向量（逗号分隔），与 data_path 二选一   |
-| `--data_path`          | str   | -                     | 批量输入文件路径（xlsx 或 csv）             |
-| `--start_idx`          | int   | 0                     | 起始样本索引（批量输入时有效）              |
-| `--end_idx`            | int   | None                  | 结束样本索引（批量输入时有效）              |
-| `--qdrant_url`         | str   | http://localhost:6333 | Qdrant 服务地址                             |
-| `--collection_prefix`  | str   | **必需**              | Collection 前缀（自动添加 _scale0/1/2）     |
-| `--top_k`              | int   | 10                    | 检索的相似样本数                            |
-| `--gamma`              | float | 10.0                  | 相似度加权系数                              |
-| `--fusion_weights`     | str   | 0.5,0.3,0.2           | 三尺度融合权重                              |
-| `--exclude_self`       | str   | true                  | 是否排除自身                                |
-| `--min_results`        | int   | 10                    | 额外请求的结果数（用于过滤）                |
-| `--l2_normalize`       | flag  | -                     | 对查询向量 L2 归一化（需与入库时一致）      |
-| `--use_y1`             | str   | false                 | 是否计算 TimeMixer++ 预测                   |
-| `--use_y2`             | str   | true                  | 是否计算 RAG 投票预测                       |
-| `--timemixer_ckpt`     | str   | None                  | TimeMixer++ checkpoint（use_y1 时需要）     |
-| `--provide_y1_to_llm`  | str   | false                 | 是否将 y1 提供给 LLM                        |
-| `--provide_y2_to_llm`  | str   | false                 | 是否将 y2 提供给 LLM                        |
-| `--llm_mode`           | str   | none                  | LLM 模式：none/top/uncertain/all            |
-| `--threshold`          | float | 0.7                   | 不确定性阈值（uncertain 模式）              |
-| `--delta`              | float | 0.1                   | 概率接近阈值范围（uncertain 模式）          |
-| `--user_confirm`       | str   | true                  | 批量模式下是否需要用户确认                  |
-| `--ollama_url`         | str   | http://localhost:11434| Ollama 服务地址                             |
-| `--ollama_model`       | str   | qwen2.5:7b            | Ollama 模型名称                             |
-| `--temperature`        | float | 0.0                   | LLM 生成温度                                |
-| `--output_dir`         | str   | results               | 输出目录（批量模式）                        |
+| 参数                    | 类型  | 默认值                 | 说明                                      |
+| ----------------------- | ----- | ---------------------- | ----------------------------------------- |
+| `--input_inline`      | str   | -                      | 48维向量（逗号分隔），与 data_path 二选一 |
+| `--data_path`         | str   | -                      | 批量输入文件路径（xlsx 或 csv）           |
+| `--start_idx`         | int   | 0                      | 起始样本索引（批量输入时有效）            |
+| `--end_idx`           | int   | None                   | 结束样本索引（批量输入时有效）            |
+| `--qdrant_url`        | str   | http://localhost:6333  | Qdrant 服务地址                           |
+| `--collection_prefix` | str   | **必需**         | Collection 前缀（自动添加 _scale0/1/2）   |
+| `--top_k`             | int   | 10                     | 检索的相似样本数                          |
+| `--gamma`             | float | 10.0                   | 相似度加权系数                            |
+| `--fusion_weights`    | str   | 0.5,0.3,0.2            | 三尺度融合权重                            |
+| `--exclude_self`      | str   | true                   | 是否排除自身                              |
+| `--min_results`       | int   | 10                     | 额外请求的结果数（用于过滤）              |
+| `--l2_normalize`      | flag  | -                      | 对查询向量 L2 归一化（需与入库时一致）    |
+| `--use_y1`            | str   | false                  | 是否计算 TimeMixer++ 预测                 |
+| `--use_y2`            | str   | true                   | 是否计算 RAG 投票预测                     |
+| `--timemixer_ckpt`    | str   | None                   | TimeMixer++ checkpoint（use_y1 时需要）   |
+| `--provide_y1_to_llm` | str   | false                  | 是否将 y1 提供给 LLM                      |
+| `--provide_y2_to_llm` | str   | false                  | 是否将 y2 提供给 LLM                      |
+| `--llm_mode`          | str   | none                   | LLM 模式：none/top/uncertain/all          |
+| `--threshold`         | float | 0.7                    | 不确定性阈值（uncertain 模式）            |
+| `--delta`             | float | 0.1                    | 概率接近阈值范围（uncertain 模式）        |
+| `--user_confirm`      | str   | true                   | 批量模式下是否需要用户确认                |
+| `--ollama_url`        | str   | http://localhost:11434 | Ollama 服务地址                           |
+| `--ollama_model`      | str   | qwen2.5:7b             | Ollama 模型名称                           |
+| `--temperature`       | float | 0.0                    | LLM 生成温度                              |
+| `--output_dir`        | str   | results                | 输出目录（批量模式）                      |
 
 ### 数据输入格式
 
 **xlsx 文件**：
+
 - Sheet3，4-51 列（共48列）为特征，52 列为标签
 
 **csv 文件**：
+
 - 无表头，0-47 列（共48列）为特征，48 列为标签
 
 ### LLM 模式说明
 
-| 模式        | 说明                                         |
-| ----------- | -------------------------------------------- |
-| `none`      | 不调用 LLM，使用 y1/y2 简单融合              |
-| `top`       | 只对第一个样本调用 LLM                       |
-| `uncertain` | 当预测接近阈值时调用 LLM                     |
-| `all`       | 对所有样本调用 LLM                           |
+| 模式          | 说明                            |
+| ------------- | ------------------------------- |
+| `none`      | 不调用 LLM，使用 y1/y2 简单融合 |
+| `top`       | 只对第一个样本调用 LLM          |
+| `uncertain` | 当预测接近阈值时调用 LLM        |
+| `all`       | 对所有样本调用 LLM              |
 
 ### 输出格式
 
@@ -1413,6 +1415,8 @@ python scripts/predict_with_ollama_rag.py --data_path TDdata/alldata.xlsx --qdra
 
 除了多尺度 embedding RAG 系统，还支持直接将原始 48 维温度向量存入 Qdrant 进行相似样本检索。
 
+地址 `http://localhost:6333/dashboard`
+
 ### 原始数据入库
 
 将 CSV 或 Excel 文件中的原始数据直接存入 Qdrant（单个 Collection）。
@@ -1430,17 +1434,17 @@ python scripts/ingest_raw_to_qdrant.py --data_path TDdata/TestData.csv --qdrant_
 
 **入库脚本参数**：
 
-| 参数                | 类型 | 默认值                | 说明                             |
-| ------------------- | ---- | --------------------- | -------------------------------- |
-| `--data_path`       | str  | **必需**              | 数据文件路径（.xlsx 或 .csv）    |
-| `--qdrant_url`      | str  | http://localhost:6333 | Qdrant 服务地址                  |
-| `--collection_name` | str  | raw_temperature_kb    | Collection 名称                  |
-| `--normalize`       | flag | -                     | 应用 z-score 归一化              |
-| `--l2_normalize`    | flag | -                     | 应用 L2 归一化（推荐）           |
-| `--distance`        | str  | Cosine                | 距离度量（Cosine/Euclid/Dot）    |
-| `--recreate`        | flag | -                     | 重建已有 collection              |
-| `--id_offset`       | int  | 0                     | ID 偏移量（用于追加数据）        |
-| `--batch_size`      | int  | 256                   | 批量插入大小                     |
+| 参数                  | 类型 | 默认值                | 说明                          |
+| --------------------- | ---- | --------------------- | ----------------------------- |
+| `--data_path`       | str  | **必需**        | 数据文件路径（.xlsx 或 .csv） |
+| `--qdrant_url`      | str  | http://localhost:6333 | Qdrant 服务地址               |
+| `--collection_name` | str  | raw_temperature_kb    | Collection 名称               |
+| `--normalize`       | flag | -                     | 应用 z-score 归一化           |
+| `--l2_normalize`    | flag | -                     | 应用 L2 归一化（推荐）        |
+| `--distance`        | str  | Cosine                | 距离度量（Cosine/Euclid/Dot） |
+| `--recreate`        | flag | -                     | 重建已有 collection           |
+| `--id_offset`       | int  | 0                     | ID 偏移量（用于追加数据）     |
+| `--batch_size`      | int  | 256                   | 批量插入大小                  |
 
 **Payload 字段**：
 
@@ -1472,21 +1476,21 @@ python scripts/query_raw_qdrant.py --data_path TDdata/TrainData.csv --qdrant_url
 
 **查询脚本参数**：
 
-| 参数                    | 类型  | 默认值                | 说明                                        |
-| ----------------------- | ----- | --------------------- | ------------------------------------------- |
-| `--data_path`           | str   | None                  | 数据文件路径（配合 --query_index 使用）     |
-| `--query_index`         | int   | None                  | 查询样本索引                                |
-| `--query_vector`        | str   | None                  | 直接输入 48 维向量（逗号分隔）              |
-| `--qdrant_url`          | str   | http://localhost:6333 | Qdrant 服务地址                             |
-| `--collection_name`     | str   | raw_temperature_kb    | Collection 名称                             |
-| `--top_k`               | int   | 10                    | 检索的相似样本数                            |
-| `--retrieve_only`       | str   | true                  | 仅检索不预测                                |
-| `--exclude_self`        | str   | true                  | 过滤掉查询样本本身                          |
-| `--gamma`               | float | 10.0                  | 相似度加权系数（retrieve_only=false 时有效）|
-| `--normalize`           | flag  | -                     | 应用 z-score 归一化                         |
-| `--l2_normalize`        | flag  | -                     | 应用 L2 归一化                              |
-| `--json_output`         | str   | false                 | 输出 JSON 格式                              |
-| `--output_file`         | str   | None                  | JSON 输出文件路径                           |
+| 参数                  | 类型  | 默认值                | 说明                                         |
+| --------------------- | ----- | --------------------- | -------------------------------------------- |
+| `--data_path`       | str   | None                  | 数据文件路径（配合 --query_index 使用）      |
+| `--query_index`     | int   | None                  | 查询样本索引                                 |
+| `--query_vector`    | str   | None                  | 直接输入 48 维向量（逗号分隔）               |
+| `--qdrant_url`      | str   | http://localhost:6333 | Qdrant 服务地址                              |
+| `--collection_name` | str   | raw_temperature_kb    | Collection 名称                              |
+| `--top_k`           | int   | 10                    | 检索的相似样本数                             |
+| `--retrieve_only`   | str   | true                  | 仅检索不预测                                 |
+| `--exclude_self`    | str   | true                  | 过滤掉查询样本本身                           |
+| `--gamma`           | float | 10.0                  | 相似度加权系数（retrieve_only=false 时有效） |
+| `--normalize`       | flag  | -                     | 应用 z-score 归一化                          |
+| `--l2_normalize`    | flag  | -                     | 应用 L2 归一化                               |
+| `--json_output`     | str   | false                 | 输出 JSON 格式                               |
+| `--output_file`     | str   | None                  | JSON 输出文件路径                            |
 
 ### 原始数据 RAG 完整工作流
 
@@ -1511,14 +1515,14 @@ python scripts/query_raw_qdrant.py --data_path TDdata/alldata.xlsx --qdrant_url 
 
 ### 原始数据 vs 多尺度 Embedding 对比
 
-| 特性         | 原始数据 RAG                 | 多尺度 Embedding RAG        |
-| ------------ | ---------------------------- | --------------------------- |
-| 向量维度     | 48 维                        | 128 维（可配置）            |
-| 是否需要训练 | 否                           | 是（SupCon + BCE）          |
-| 多尺度信息   | 无                           | 有（3 个尺度）              |
-| 检索效果     | 基于原始特征相似度           | 基于学习到的语义相似度      |
-| 适用场景     | 快速原型、简单任务           | 复杂任务、高精度需求        |
-| 入库速度     | 快                           | 需要先提取特征、训练编码器  |
+| 特性         | 原始数据 RAG       | 多尺度 Embedding RAG       |
+| ------------ | ------------------ | -------------------------- |
+| 向量维度     | 48 维              | 128 维（可配置）           |
+| 是否需要训练 | 否                 | 是（SupCon + BCE）         |
+| 多尺度信息   | 无                 | 有（3 个尺度）             |
+| 检索效果     | 基于原始特征相似度 | 基于学习到的语义相似度     |
+| 适用场景     | 快速原型、简单任务 | 复杂任务、高精度需求       |
+| 入库速度     | 快                 | 需要先提取特征、训练编码器 |
 
 ### 项目新增文件
 
