@@ -839,6 +839,8 @@ Relative F1 (vs Full Model):
 
 本项目支持将多尺度特征用于 RAG（检索增强生成）系统，实现基于相似样本的可解释预测。
 
+知识库地址 `http://localhost:6333/dashboard`
+
 ### 系统架构
 
 ```
