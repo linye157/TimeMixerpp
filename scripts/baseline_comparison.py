@@ -22,6 +22,9 @@ Usage:
     
     # 只对比特定模型
     python scripts/baseline_comparison.py --data_path TDdata/TrainData.csv --models lstm bilstm transformer
+    
+    # 包含 TimeMixer++ 并使用消融配置（如 no_tid）
+    python scripts/baseline_comparison.py --data_path TDdata/TrainData.csv --include_timemixer --ablation no_tid
 """
 
 import sys
@@ -46,6 +49,13 @@ from torch.utils.data import DataLoader
 from timemixerpp import TimeMixerPPConfig, TimeMixerPPForBinaryCls
 from timemixerpp.data import load_file_strict, create_dataloaders
 from timemixerpp.utils import set_seed, compute_metrics, setup_logging, AverageMeter
+
+# Import ablation utilities from ablation_study
+from ablation_study import (
+    create_ablated_model, 
+    ABLATION_REGISTRY as TIMEMIXER_ABLATION_REGISTRY,
+    list_ablations as list_timemixer_ablations
+)
 
 logger = logging.getLogger(__name__)
 
@@ -443,6 +453,10 @@ def parse_args():
                         help=f'Models to compare. Available: {list_models()}. Default: all')
     parser.add_argument('--include_timemixer', action='store_true',
                         help='Include TimeMixer++ in comparison')
+    parser.add_argument('--ablation', type=str, default='full',
+                        help=f'TimeMixer++ ablation type. Available: {list_timemixer_ablations()}. Default: full')
+    parser.add_argument('--list_ablations', action='store_true',
+                        help='List available TimeMixer++ ablation types and exit')
     
     parser.add_argument('--epochs', type=int, default=50, help='Training epochs')
     parser.add_argument('--batch_size', type=int, default=32, help='Batch size')
@@ -543,6 +557,15 @@ def main():
     args = parse_args()
     setup_logging()
     
+    # Handle --list_ablations
+    if args.list_ablations:
+        print("\nAvailable TimeMixer++ ablation types:")
+        print("-" * 50)
+        for name, config in TIMEMIXER_ABLATION_REGISTRY.items():
+            print(f"  {name:<16} - {config.description}")
+        print("-" * 50)
+        return
+    
     logger.info("=" * 60)
     logger.info("Baseline Model Comparison")
     logger.info("=" * 60)
@@ -599,30 +622,52 @@ def main():
     
     # Include TimeMixer++ if requested
     if args.include_timemixer:
-        logger.info("\nTraining TimeMixer++...")
+        # Validate ablation type
+        if args.ablation not in TIMEMIXER_ABLATION_REGISTRY:
+            logger.error(f"Unknown ablation type: {args.ablation}. Available: {list_timemixer_ablations()}")
+            return
+        
+        ablation_config = TIMEMIXER_ABLATION_REGISTRY[args.ablation]
+        ablation_suffix = f" ({args.ablation})" if args.ablation != 'full' else ""
+        model_display_name = f"TimeMixer++{ablation_suffix}"
+        
+        logger.info(f"\nTraining {model_display_name}...")
+        if args.ablation != 'full':
+            logger.info(f"  Ablation: {ablation_config.description}")
         set_seed(args.seed)
         
-        config = TimeMixerPPConfig(
+        # Create base config
+        base_config = TimeMixerPPConfig(
             seq_len=48, c_in=1, d_model=args.hidden_dim,
             n_layers=2, n_heads=4, top_k=3, dropout=0.1
         )
-        model = TimeMixerPPForBinaryCls(config)
+        
+        # Apply config overrides if any
+        if ablation_config.config_override:
+            config_dict = base_config.__dict__.copy()
+            config_dict.update(ablation_config.config_override)
+            base_config = TimeMixerPPConfig(**config_dict)
+        
+        # Create ablated model
+        model = create_ablated_model(base_config, ablation_config.ablation_type)
         n_params = sum(p.numel() for p in model.parameters())
         logger.info(f"  Parameters: {n_params:,}")
         
         # Train model
         model = train_model(
             model, train_loader, val_loader,
-            epochs=args.epochs, lr=args.lr, device=device, model_name='TimeMixer++'
+            epochs=args.epochs, lr=args.lr, device=device, model_name=model_display_name
         )
         
         # Evaluate on test set
         logger.info(f"  Evaluating on test set...")
         test_metrics = evaluate_model(model, test_loader, device)
         
-        results['timemixer++'] = {
+        result_key = f"timemixer++_{args.ablation}" if args.ablation != 'full' else 'timemixer++'
+        results[result_key] = {
             'params': n_params,
-            'description': 'TimeMixer++ (ours)',
+            'description': f'TimeMixer++ ({ablation_config.description})',
+            'ablation': args.ablation,
             **test_metrics
         }
         logger.info(f"  Test F1: {test_metrics['f1']:.4f}, FPR: {test_metrics['fpr']:.4f}, FNR: {test_metrics['fnr']:.4f}")

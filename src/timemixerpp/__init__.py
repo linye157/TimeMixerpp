@@ -29,7 +29,7 @@ from .losses import SupConLoss, CombinedSupConBCELoss, MultiScaleSupConLoss
 from .ollama_client import OllamaClient, build_prediction_prompt, validate_llm_response
 from .evidence_builder import build_evidence_pack, compute_query_stats, compute_final_probability
 
-__version__ = "1.0.0"
+__version__ = "2.0.0"
 __all__ = [
     # Core TimeMixer++ components
     "TimeMixerPPConfig",
