@@ -8,6 +8,7 @@ A modular implementation of the TimeMixer++ architecture with:
 - MRM: Multi-Resolution Mixing
 
 Also includes:
+- Agent: Unified TimeMixerAgent for autonomous inference (model + RAG + LLM)
 - Metric Learning: TemporalConvEmbedder for sequence embeddings
 - Losses: SupConLoss for contrastive learning
 - Qdrant Utils: Vector database integration
@@ -28,6 +29,9 @@ from .losses import SupConLoss, CombinedSupConBCELoss, MultiScaleSupConLoss
 # LLM integration components
 from .ollama_client import OllamaClient, build_prediction_prompt, validate_llm_response
 from .evidence_builder import build_evidence_pack, compute_query_stats, compute_final_probability
+
+# Agent: unified autonomous inference
+from .agent import TimeMixerAgent, AgentResult
 
 __version__ = "1.0.0"
 __all__ = [
@@ -54,5 +58,8 @@ __all__ = [
     "build_evidence_pack",
     "compute_query_stats",
     "compute_final_probability",
+    # Agent
+    "TimeMixerAgent",
+    "AgentResult",
 ]
 
